@@ -77,12 +77,15 @@ def process_lang(path):
     return text
 
 
-def read_txt(path):
+def read_txt(path, not_exist_ok=False):
     if os.path.exists(path):
         with open(path, "r") as f:
             return f.readline().strip()
     else:
-        raise ValueError(f"File {path} does not exist")
+        if not_exist_ok:
+            return ""
+        else:
+            raise ValueError(f"File {path} does not exist")
 
 
 def process_success(path):
@@ -206,8 +209,12 @@ class SOARDataset(MultiThreadedDatasetBuilder):
             "has_language": bool(instruction),
             "task_list": read_txt(os.path.join(path, "task_list.txt")),
             "object_list": read_txt(os.path.join(path, "object_list.txt")),
-            "time": read_txt(os.path.join(path, "time.txt")),
-            "robot_id": read_txt(os.path.join(path, "robot_id.txt")),
+            "time": read_txt(
+                os.path.join(path, "time.txt"), not_exist_ok=True,
+            ),
+            "robot_id": read_txt(
+                os.path.join(path, "robot_id.txt"), not_exist_ok=True,
+            ),
             "success": process_success(path),
         }
 
@@ -241,7 +248,6 @@ class SOARDataset(MultiThreadedDatasetBuilder):
         success_inputs, failure_inputs = [], []
 
         for path in paths:
-            import pdb; pdb.set_trace()
             search_success = os.path.join(
                 path, "success", "traj*"
             )
