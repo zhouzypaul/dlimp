@@ -11,7 +11,7 @@ from dataset_builder import MultiThreadedDatasetBuilder
 
 # we ignore the small amount of data that contains >4 views
 IMAGE_SIZE = (256, 256)
-DEPTH = 6
+DEPTH = 3
 TRAIN_PROPORTION = 1.0
 
 
@@ -238,28 +238,34 @@ class SOARDataset(MultiThreadedDatasetBuilder):
         # each path is a directory that contains dated directories
         paths = glob.glob(os.path.join(dl_manager.manual_dir, *("*" * (DEPTH - 1))))
 
-        train_inputs, val_inputs = [], []
+        success_inputs, failure_inputs = [], []
 
         for path in paths:
-            search_path = os.path.join(
-                path, "traj*"
+            import pdb; pdb.set_trace()
+            search_success = os.path.join(
+                path, "success", "traj*"
             )
-            all_traj = glob.glob(search_path)
-            if not all_traj:
-                print(f"no trajs found in {search_path}")
+            search_failure = os.path.join(
+                path, "failure", "traj*"
+            )
+            all_traj_success = glob.glob(search_success)
+            all_traj_failure = glob.glob(search_failure)
+            if not all_traj_success:
+                print(f"no trajs found in {search_success}")
+                continue
+            if not all_traj_failure:
+                print(f"no trajs found in {search_failure}")
                 continue
 
-            all_inputs = all_traj
-
-            train_inputs += all_inputs[: int(len(all_inputs) * TRAIN_PROPORTION)]
-            val_inputs += all_inputs[int(len(all_inputs) * TRAIN_PROPORTION) :]
+            success_inputs += all_traj_success
+            failure_inputs += all_traj_failure
 
         logging.info(
-            "Converting %d training and %d validation files.",
-            len(train_inputs),
-            len(val_inputs),
+            "Converting %d success and %d failure files.",
+            len(success_inputs),
+            len(failure_inputs),
         )
         return {
-            "train": iter(train_inputs),
-            # "val": iter(val_inputs),
+            "success": iter(success_inputs),
+            "failure": iter(failure_inputs),
         }
